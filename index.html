@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>허니팡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Jua&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+
+/* 이 페이지는 하나의 아케이드 화면으로 고정 연출한다(단일 테마).
+   모든 색과 배경을 명시적으로 칠해 호스트 테마에 기대지 않는다. */
+:root{
+  --bg:#150F26;
+  --bg-glow:#2E2058;
+  --panel:#221A3B;
+  --panel-2:#2B2250;
+  --cell:#1C1535;
+  --line:rgba(167,150,214,.15);
+  --ink:#F8F3FF;
+  --muted:#A294C9;
+  --gold:#FFC64B;
+  --pink:#FF7BD5;
+  --red:#FF5C6E;
+  --mint:#5BE0A5;
+  --t-swap:150ms;
+  --t-fall:280ms;
+  color-scheme:dark;
+}
+
+html,body{height:100%}
+body{
+  margin:0;
+  min-height:100dvh;
+  padding:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(1100px 620px at 50% -10%, var(--bg-glow), rgba(21,15,38,0) 64%),
+    var(--bg);
+  color:var(--ink);
+  font-family:'Fredoka','Jua',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.wrap{
+  width:100%;
+  max-width:460px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* ── 헤더 ───────────────────────────── */
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{
+  font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);font-weight:600;margin:0 0 2px
+}
+h1{
+  font-family:'Jua',sans-serif;font-weight:400;
+  font-size:34px;line-height:1;margin:0;letter-spacing:.01em;
+  text-wrap:balance;
+}
+h1 em{font-style:normal;color:var(--gold)}
+.tag{
+  font-size:12px;color:var(--muted);margin:6px 0 0;
+}
+.soundbtn{
+  flex:none;border:1px solid var(--line);background:var(--panel);
+  color:var(--muted);border-radius:999px;padding:7px 12px;
+  font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.soundbtn:hover{color:var(--ink);border-color:rgba(167,150,214,.34)}
+.soundbtn[aria-pressed="false"]{opacity:.55}
+
+/* ── HUD ────────────────────────────── */
+.hud{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;
+  background:var(--line);border:1px solid var(--line);
+  border-radius:14px;overflow:hidden;
+}
+.stat{
+  background:var(--panel);padding:9px 12px 10px;
+  display:flex;flex-direction:column;gap:2px;
+}
+.stat .k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stat .v{font-size:22px;font-weight:600;line-height:1.05;font-variant-numeric:tabular-nums}
+.stat.now .v{color:var(--gold)}
+.stat.clock .v{color:var(--mint)}
+.stat.clock.low .v{color:var(--red)}
+
+.bar{height:6px;border-radius:999px;background:var(--panel-2);overflow:hidden}
+.bar i{
+  display:block;height:100%;width:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--mint),#8BE8C6);
+  transition:width .12s linear;
+}
+.bar.low i{background:linear-gradient(90deg,var(--red),#FF9AA6);animation:throb .7s ease-in-out infinite}
+@keyframes throb{50%{opacity:.5}}
+
+/* ── 보드 ───────────────────────────── */
+.stage{position:relative}
+.board{
+  position:relative;
+  /* 보드 밖 UI 실측 253px(헤더77+HUD59+게이지6+하단40 + gap48 + 본문패딩28) + 여유 */
+  width:min(100%, calc(100dvh - 258px));
+  margin:0 auto;
+  aspect-ratio:1;
+  border-radius:20px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255,198,75,.09), rgba(0,0,0,0) 60%),
+    var(--cell);
+  border:1px solid var(--line);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 18px 44px -22px rgba(0,0,0,.9);
+  overflow:hidden;
+  touch-action:none;
+  container-type:size;
+  cursor:pointer;
+}
+.grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr)}
+.grid div{border-right:1px solid rgba(255,255,255,.025);border-bottom:1px solid rgba(255,255,255,.025)}
+
+/* 주의: 여기에 padding:%를 쓰면 안 된다.
+   백분율 패딩은 '자기 너비'가 아니라 '컨테이닝 블록(보드) 너비' 기준으로 풀려서
+   젤리가 칸의 23% 크기로 찌그러진다(실제로 그렇게 만들었다가 잡음).
+   여백은 젤리 크기(%)로 만든다. */
+.tile{
+  position:absolute;left:0;top:0;
+  width:calc(100%/7);height:calc(100%/7);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform var(--t-fall) cubic-bezier(.3,1.2,.6,1);
+  will-change:transform;
+}
+.tile.swapping{transition:transform var(--t-swap) ease-out}
+
+.jelly{
+  width:88%;height:88%;border-radius:30%;
+  background-color:var(--j,#888);
+  background-image:
+    radial-gradient(circle at 30% 24%, rgba(255,255,255,.46), rgba(255,255,255,0) 44%),
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.24));
+  box-shadow:
+    inset 0 -2px 5px rgba(0,0,0,.28),
+    inset 0 2px 3px rgba(255,255,255,.30),
+    0 3px 8px -3px rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  transition:transform .16s cubic-bezier(.34,1.4,.6,1), box-shadow .16s;
+}
+.face{font-size:26px;font-size:7.6cqmin;line-height:1;user-select:none}
+
+.tile.sel .jelly{
+  transform:scale(1.14);
+  box-shadow:0 0 0 3px var(--ink), 0 0 22px -2px var(--j), inset 0 -2px 5px rgba(0,0,0,.28);
+}
+.tile.hint .jelly{animation:wiggle .82s ease-in-out infinite}
+@keyframes wiggle{0%,100%{transform:rotate(-7deg) scale(1.02)}50%{transform:rotate(7deg) scale(1.08)}}
+
+.tile.pop .jelly{animation:pop .2s ease-in forwards}
+@keyframes pop{
+  35%{transform:scale(1.22)}
+  100%{transform:scale(0) rotate(24deg);opacity:0}
+}
+.tile.born .jelly{animation:born .42s cubic-bezier(.34,1.6,.5,1)}
+@keyframes born{0%{transform:scale(.2) rotate(-30deg)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* 특수 젤리 */
+.jelly.bomb{box-shadow:0 0 0 3px var(--gold), 0 0 20px -4px var(--gold), inset 0 -2px 5px rgba(0,0,0,.28)}
+.jelly.bomb::after{
+  content:"💥";position:absolute;right:-6%;bottom:-6%;
+  font-size:4.4cqmin;line-height:1;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+.jelly.zap{
+  background-image:
+    conic-gradient(from 0deg,#FF7BA8,#FFD24B,#5BE0A5,#7EC8FF,#A79BFF,#FF7A55,#FF7BA8),
+    radial-gradient(circle at 30% 24%, rgba(255,255,255,.5), rgba(255,255,255,0) 46%);
+  box-shadow:0 0 0 3px var(--ink), 0 0 24px -2px var(--pink), inset 0 -2px 5px rgba(0,0,0,.3);
+  animation:spin 4s linear infinite;
+}
+@keyframes spin{to{filter:hue-rotate(360deg)}}
+
+/* 보드 위 이펙트 */
+.fx{
+  position:absolute;transform:translate(-50%,-50%);
+  pointer-events:none;font-weight:600;font-size:15px;
+  color:var(--ink);text-shadow:0 2px 8px rgba(0,0,0,.75);
+  animation:rise .9s cubic-bezier(.2,.8,.3,1) forwards;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.fx.big{font-size:20px;color:var(--gold)}
+@keyframes rise{
+  0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}
+  22%{opacity:1;transform:translate(-50%,-58%) scale(1.06)}
+  100%{opacity:0;transform:translate(-50%,-155%) scale(1)}
+}
+.combo{
+  position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);
+  pointer-events:none;font-family:'Jua',sans-serif;
+  font-size:38px;color:var(--pink);
+  text-shadow:0 4px 20px rgba(0,0,0,.8);
+  animation:comboIn .78s cubic-bezier(.2,.9,.3,1) forwards;
+}
+@keyframes comboIn{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(-8deg)}
+  25%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(2deg)}
+  70%{opacity:1;transform:translate(-50%,-56%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-70%) scale(.95)}
+}
+
+/* ── 오버레이 ───────────────────────── */
+.veil{
+  position:absolute;inset:0;border-radius:20px;
+  background:rgba(21,15,38,.9);
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:26px;text-align:center;
+  border:1px solid var(--line);
+  animation:veilIn .28s ease-out;
+}
+@keyframes veilIn{from{opacity:0}to{opacity:1}}
+.veil[hidden]{display:none}
+.veil h2{
+  font-family:'Jua',sans-serif;font-weight:400;font-size:30px;
+  margin:0;line-height:1.15;text-wrap:balance;
+}
+.veil p{margin:0;color:var(--muted);font-size:14px;line-height:1.65;max-width:30ch;text-wrap:pretty}
+.veil .final{
+  font-size:52px;font-weight:600;color:var(--gold);line-height:1;
+  font-variant-numeric:tabular-nums;margin:2px 0;
+}
+.veil .newbest{color:var(--pink);font-weight:600;font-size:14px}
+.veil .note{font-size:12px;color:var(--muted);opacity:.8;max-width:32ch;line-height:1.55}
+.veil .note[hidden]{display:none}
+.play{
+  margin-top:8px;border:0;cursor:pointer;
+  font-family:'Jua',sans-serif;font-size:19px;
+  color:#2A1B00;background:linear-gradient(180deg,#FFDA84,var(--gold));
+  padding:13px 34px;border-radius:999px;
+  box-shadow:0 8px 20px -8px rgba(255,198,75,.85), inset 0 -2px 0 rgba(0,0,0,.14);
+  transition:transform .14s cubic-bezier(.34,1.5,.6,1), box-shadow .14s;
+}
+.play:hover{transform:translateY(-2px);box-shadow:0 12px 26px -8px rgba(255,198,75,.9), inset 0 -2px 0 rgba(0,0,0,.14)}
+.play:active{transform:translateY(1px)}
+.legend{display:flex;flex-direction:column;gap:5px;margin-top:4px;font-size:13px;color:var(--muted)}
+.legend b{color:var(--ink);font-weight:600}
+
+/* ── 하단 ───────────────────────────── */
+.foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rules{font-size:11.5px;color:var(--muted);line-height:1.5}
+.rules b{color:var(--ink);font-weight:600}
+.restart{
+  flex:none;border:1px solid var(--line);background:var(--panel);color:var(--muted);
+  border-radius:999px;padding:8px 15px;font-family:inherit;font-size:12.5px;font-weight:500;
+  cursor:pointer;transition:color .15s,border-color .15s;
+}
+.restart:hover{color:var(--ink);border-color:rgba(167,150,214,.36)}
+
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}
+
+@media (max-width:420px){
+  h1{font-size:29px}
+  .stat .v{font-size:19px}
+  .board{width:min(100%, calc(100dvh - 250px))}
+}
+@media (prefers-reduced-motion:reduce){
+  .bar.low i,.jelly.zap,.tile.hint .jelly{animation:none}
+}
+</style>
+
+<main class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">60초 도전</p>
+      <h1>허니<em>팡</em></h1>
+      <p class="tag">같은 젤리 3개를 나란히 붙이면 팡!</p>
+    </div>
+    <button class="soundbtn" id="sound" aria-pressed="true">🔊 소리</button>
+  </header>
+
+  <section class="hud">
+    <div class="stat now"><span class="k">점수</span><span class="v" id="score">0</span></div>
+    <div class="stat"><span class="k">최고</span><span class="v" id="best">0</span></div>
+    <div class="stat clock" id="clock"><span class="k">남은 시간</span><span class="v" id="time">60</span></div>
+  </section>
+  <div class="bar" id="bar"><i id="barfill"></i></div>
+
+  <div class="stage">
+    <div class="board" id="board">
+      <div class="grid" aria-hidden="true"></div>
+    </div>
+
+    <div class="veil" id="veilStart">
+      <h2>60초, 시작할까?</h2>
+      <p>젤리를 옆칸으로 밀어서 같은 얼굴 3개를 만들면 사라져. 위에서 떨어진 젤리가 또 맞으면 연쇄 콤보!</p>
+      <div class="legend">
+        <span><b>4개</b> 연결 → 💥 폭탄 &nbsp;·&nbsp; 주변 3×3 제거</span>
+        <span><b>5개</b> 연결 → ⚡ 번개 &nbsp;·&nbsp; 가로·세로 한 줄 제거</span>
+        <span>특수 젤리를 만들면 <b>시간이 늘어나</b></span>
+      </div>
+      <button class="play" id="startBtn">시작</button>
+    </div>
+
+    <div class="veil" id="veilOver" hidden>
+      <h2>시간 종료</h2>
+      <div class="final" id="finalScore">0</div>
+      <span class="newbest" id="newBest" hidden>🎉 최고 기록 갱신!</span>
+      <p id="verdict"></p>
+      <p class="note" id="noStore" hidden>이 화면에서는 브라우저가 저장을 막고 있어 최고 기록이 남지 않아요. 파일을 내려받아 열면 기록이 저장됩니다.</p>
+      <button class="play" id="againBtn">다시하기</button>
+    </div>
+  </div>
+
+  <div class="foot">
+    <p class="rules"><b>3개</b> 팡 · <b>4개</b> 💥 폭탄 · <b>5개</b> ⚡ 번개 · 연쇄할수록 점수 배수 ↑</p>
+    <button class="restart" id="restartBtn">처음부터</button>
+  </div>
+</main>
+
+<script>
+(() => {
+"use strict";
+
+/* ── 상수 ───────────────────────────── */
+const COLS = 7, ROWS = 7, N = COLS * ROWS;
+const ROUND = 60;                 // 제한 시간(초)
+const TYPES = [
+  { e:"🐰", c:"#FF7BA8" },
+  { e:"🐱", c:"#FFD24B" },
+  { e:"🐸", c:"#5BE0A5" },
+  { e:"🐼", c:"#7EC8FF" },
+  { e:"🐨", c:"#A79BFF" },
+  { e:"🦊", c:"#FF7A55" },
+];
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SWAP_MS = RM ? 70  : 150;
+const POP_MS  = RM ? 90  : 200;
+const FALL_MS = RM ? 110 : 280;
+document.documentElement.style.setProperty("--t-swap", SWAP_MS + "ms");
+document.documentElement.style.setProperty("--t-fall", FALL_MS + "ms");
+
+/* ── DOM ────────────────────────────── */
+const boardEl   = document.getElementById("board");
+const scoreEl   = document.getElementById("score");
+const bestEl    = document.getElementById("best");
+const timeEl    = document.getElementById("time");
+const clockEl   = document.getElementById("clock");
+const barEl     = document.getElementById("bar");
+const barFill   = document.getElementById("barfill");
+const veilStart = document.getElementById("veilStart");
+const veilOver  = document.getElementById("veilOver");
+const finalEl   = document.getElementById("finalScore");
+const newBestEl = document.getElementById("newBest");
+const verdictEl = document.getElementById("verdict");
+const soundBtn  = document.getElementById("sound");
+const noStoreEl = document.getElementById("noStore");
+
+/* 격자 배경 */
+const gridEl = boardEl.querySelector(".grid");
+for (let i = 0; i < N; i++) gridEl.appendChild(document.createElement("div"));
+
+/* ── 상태 ───────────────────────────── */
+let board = new Array(N).fill(null);
+let state = "ready";              // ready | playing | over
+let busy = false;
+let score = 0, timeLeft = ROUND, shownTime = -1, shownScore = -1;
+let sel = -1, uid = 0, clockIv = 0, hintTimer = 0;
+let deadline = 0, paused = false;
+let soundOn = true;
+
+/* ── 저장소 ─────────────────────────
+   퍼블리시된 아티팩트는 iframe 안에서 도는데, 그 환경이 브라우저 저장소를
+   막아버리는 경우가 있다(실제로 최고 기록이 안 남는 제보를 받음).
+   그래서 한 가지에 걸지 않고 쓸 수 있는 걸 차례로 찾아 쓴다.
+   전부 막혔으면 조용히 넘어가지 말고 종료 화면에서 사실대로 알린다. */
+const Store = (function () {
+  const KEY = "honeypang.best";
+  const PROBE = KEY + ".probe";
+  function okLocal() {
+    try { localStorage.setItem(PROBE, "1"); const v = localStorage.getItem(PROBE); localStorage.removeItem(PROBE); return v === "1"; }
+    catch (e) { return false; }
+  }
+  function okCookie() {
+    try {
+      document.cookie = PROBE + "=1; path=/; max-age=60; SameSite=Lax";
+      const ok = document.cookie.indexOf(PROBE + "=1") >= 0;
+      document.cookie = PROBE + "=; path=/; max-age=0; SameSite=Lax";
+      return ok;
+    } catch (e) { return false; }
+  }
+  function okSession() {
+    try { sessionStorage.setItem(PROBE, "1"); const v = sessionStorage.getItem(PROBE); sessionStorage.removeItem(PROBE); return v === "1"; }
+    catch (e) { return false; }
+  }
+  // 오래 남는 순서대로: localStorage > 쿠키 > sessionStorage(같은 탭 새로고침까지)
+  const mode = okLocal() ? "local" : okCookie() ? "cookie" : okSession() ? "session" : "none";
+  return {
+    mode: mode,
+    persists: mode !== "none",
+    get: function () {
+      try {
+        if (mode === "local") return localStorage.getItem(KEY);
+        if (mode === "session") return sessionStorage.getItem(KEY);
+        if (mode === "cookie") {
+          const m = document.cookie.match(/(?:^|;\s*)honeypang\.best=([^;]*)/);
+          return m ? decodeURIComponent(m[1]) : null;
+        }
+      } catch (e) {}
+      return null;
+    },
+    set: function (v) {
+      try {
+        if (mode === "local") localStorage.setItem(KEY, v);
+        else if (mode === "session") sessionStorage.setItem(KEY, v);
+        else if (mode === "cookie") document.cookie = KEY + "=" + encodeURIComponent(v) + "; path=/; max-age=31536000; SameSite=Lax";
+      } catch (e) {}
+    }
+  };
+})();
+let best = parseInt(Store.get() || "0", 10) || 0;
+let roundBest = best;   // 이번 판 시작 시점의 최고 기록(갱신 배지 판정용)
+bestEl.textContent = best.toLocaleString();
+
+/* ── 소리(외부 파일 없이 합성) ────────── */
+let actx = null;
+function ac() {
+  if (!actx) {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch (e) { actx = null; }
+  }
+  return actx;
+}
+function sfx(kind, step) {
+  if (!soundOn) return;
+  const A = ac(); if (!A) return;
+  if (A.state === "suspended") A.resume();
+  const t = A.currentTime;
+  const o = A.createOscillator(), g = A.createGain();
+  o.connect(g); g.connect(A.destination);
+  let f = 440, dur = 0.12, type = "triangle", vol = 0.15;
+  if (kind === "pop") {
+    const scale = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
+    f = 392 * Math.pow(2, scale[Math.min(step || 0, scale.length - 1)] / 12);
+    dur = 0.14;
+  } else if (kind === "swap")    { f = 540; dur = 0.05; type = "sine";     vol = 0.07; }
+  else if (kind === "bad")       { f = 150; dur = 0.14; type = "sawtooth"; vol = 0.06; }
+  else if (kind === "special")   { f = 760; dur = 0.26; type = "square";   vol = 0.09; }
+  else if (kind === "over")      { f = 330; dur = 0.55; type = "sine";     vol = 0.13; }
+  o.type = type;
+  o.frequency.setValueAtTime(f, t);
+  if (kind === "over")    o.frequency.exponentialRampToValueAtTime(f / 2.5, t + dur);
+  if (kind === "special") o.frequency.exponentialRampToValueAtTime(f * 2,   t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.start(t); o.stop(t + dur + 0.03);
+}
+soundBtn.addEventListener("click", () => {
+  soundOn = !soundOn;
+  soundBtn.setAttribute("aria-pressed", String(soundOn));
+  soundBtn.textContent = soundOn ? "🔊 소리" : "🔇 소리";
+  if (soundOn) sfx("swap");
+});
+
+/* ── 유틸 ───────────────────────────── */
+const idx   = (r, c) => r * COLS + c;
+const rowOf = i => Math.floor(i / COLS);
+const colOf = i => i % COLS;
+const sleep = ms => new Promise(res => setTimeout(res, ms));
+const randType = () => Math.floor(Math.random() * TYPES.length);
+
+/* ── 타일 ───────────────────────────── */
+function newTile(type) {
+  const el = document.createElement("div");
+  el.className = "tile";
+  const j = document.createElement("div");
+  j.className = "jelly";
+  el.appendChild(j);
+  const t = { id: ++uid, type, special: null, el, jelly: j };
+  paint(t);
+  return t;
+}
+function paint(t) {
+  const d = TYPES[t.type];
+  t.jelly.style.setProperty("--j", d.c);
+  t.jelly.className = "jelly" + (t.special === "bomb" ? " bomb" : t.special === "zap" ? " zap" : "");
+  t.jelly.innerHTML = '<span class="face">' + (t.special === "zap" ? "⚡" : d.e) + "</span>";
+}
+function place(t, i) {
+  t.el.style.transform = "translate(" + colOf(i) * 100 + "%," + rowOf(i) * 100 + "%)";
+}
+function render() {
+  for (let i = 0; i < N; i++) if (board[i]) place(board[i], i);
+}
+
+/* ── 매치 판정 ──────────────────────── */
+function findRuns() {
+  const runs = [];
+  for (let r = 0; r < ROWS; r++) {
+    let c = 0;
+    while (c < COLS) {
+      const t = board[idx(r, c)];
+      if (!t) { c++; continue; }
+      let e = c + 1;
+      while (e < COLS && board[idx(r, e)] && board[idx(r, e)].type === t.type) e++;
+      if (e - c >= 3) {
+        const cells = [];
+        for (let k = c; k < e; k++) cells.push(idx(r, k));
+        runs.push({ cells, type: t.type });
+      }
+      c = e;
+    }
+  }
+  for (let c = 0; c < COLS; c++) {
+    let r = 0;
+    while (r < ROWS) {
+      const t = board[idx(r, c)];
+      if (!t) { r++; continue; }
+      let e = r + 1;
+      while (e < ROWS && board[idx(e, c)] && board[idx(e, c)].type === t.type) e++;
+      if (e - r >= 3) {
+        const cells = [];
+        for (let k = r; k < e; k++) cells.push(idx(k, c));
+        runs.push({ cells, type: t.type });
+      }
+      r = e;
+    }
+  }
+  return runs;
+}
+function swapModel(a, b) { const t = board[a]; board[a] = board[b]; board[b] = t; }
+
+/* 움직일 수 있는 수가 남았는지 / 힌트 찾기 */
+function findMove() {
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const a = idx(r, c);
+    if (c + 1 < COLS) {
+      const b = idx(r, c + 1);
+      swapModel(a, b); const ok = findRuns().length > 0; swapModel(a, b);
+      if (ok) return [a, b];
+    }
+    if (r + 1 < ROWS) {
+      const b = idx(r + 1, c);
+      swapModel(a, b); const ok = findRuns().length > 0; swapModel(a, b);
+      if (ok) return [a, b];
+    }
+  }
+  return null;
+}
+
+/* ── 보드 생성 ──────────────────────── */
+function buildBoard() {
+  for (const el of Array.from(boardEl.querySelectorAll(".tile"))) el.remove();
+  for (const el of Array.from(boardEl.querySelectorAll(".fx,.combo"))) el.remove();
+  for (let attempt = 0; attempt < 60; attempt++) {
+    board = new Array(N).fill(null);
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const bad = new Set();
+      if (c >= 2 && board[idx(r, c - 1)].type === board[idx(r, c - 2)].type) bad.add(board[idx(r, c - 1)].type);
+      if (r >= 2 && board[idx(r - 1, c)].type === board[idx(r - 2, c)].type) bad.add(board[idx(r - 1, c)].type);
+      let type;
+      do { type = randType(); } while (bad.has(type));
+      board[idx(r, c)] = { id: 0, type, special: null, el: null, jelly: null };
+    }
+    if (findMove()) break;
+  }
+  // 확정된 배치로 실제 타일 생성
+  for (let i = 0; i < N; i++) {
+    const t = newTile(board[i].type);
+    board[i] = t;
+    boardEl.appendChild(t.el);
+  }
+  render();
+}
+
+/* ── 특수 젤리 폭발 범위 ────────────── */
+function blastCells(i, kind) {
+  const out = [];
+  if (kind === "bomb") {
+    const r = rowOf(i), c = colOf(i);
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) out.push(idx(nr, nc));
+    }
+  } else {
+    const r = rowOf(i), c = colOf(i);
+    for (let k = 0; k < COLS; k++) out.push(idx(r, k));
+    for (let k = 0; k < ROWS; k++) out.push(idx(k, c));
+  }
+  return out;
+}
+
+/* ── 이펙트 ─────────────────────────── */
+function popup(i, text, big) {
+  const d = document.createElement("div");
+  d.className = "fx" + (big ? " big" : "");
+  d.textContent = text;
+  d.style.left = ((colOf(i) + 0.5) * 100 / COLS) + "%";
+  d.style.top  = ((rowOf(i) + 0.5) * 100 / ROWS) + "%";
+  boardEl.appendChild(d);
+  setTimeout(() => d.remove(), 950);
+}
+function comboBanner(n) {
+  const d = document.createElement("div");
+  d.className = "combo";
+  d.textContent = n + " 연쇄!";
+  boardEl.appendChild(d);
+  setTimeout(() => d.remove(), 820);
+}
+
+/* ── 연쇄 처리 ──────────────────────── */
+async function resolve(origin) {
+  let combo = 0;
+  while (true) {
+    const runs = findRuns();
+    if (!runs.length) break;
+    combo++;
+
+    // 1) 지울 칸 모으기
+    const clear = new Set();
+    for (const run of runs) for (const i of run.cells) if (board[i]) clear.add(i);
+
+    // 2) 4개/5개 연결 → 특수 젤리 생성 위치 확정(같은 칸이면 강한 쪽 우선)
+    const creations = new Map();
+    for (const run of runs) {
+      if (run.cells.length < 4) continue;
+      const kind = run.cells.length >= 5 ? "zap" : "bomb";
+      const pos = run.cells.indexOf(origin) >= 0
+        ? origin
+        : run.cells[Math.floor(run.cells.length / 2)];
+      const prev = creations.get(pos);
+      if (!prev || (prev === "bomb" && kind === "zap")) creations.set(pos, kind);
+    }
+    for (const pos of creations.keys()) clear.delete(pos);
+
+    // 3) 지워지는 칸에 특수 젤리가 있으면 연쇄 폭발
+    const queue = [];
+    for (const i of clear) if (board[i] && board[i].special) queue.push(i);
+    const fired = new Set();
+    while (queue.length) {
+      const i = queue.pop();
+      if (fired.has(i)) continue;
+      fired.add(i);
+      const t = board[i];
+      if (!t || !t.special) continue;
+      for (const j of blastCells(i, t.special)) {
+        if (board[j] && !clear.has(j)) {
+          clear.add(j);
+          if (board[j].special) queue.push(j);
+        }
+      }
+    }
+    // 새로 만들어질 젤리는 이번 라운드에 지워지지 않는다
+    for (const pos of creations.keys()) clear.delete(pos);
+
+    if (!clear.size && !creations.size) break;
+
+    // 4) 점수
+    const mult = Math.min(combo, 8);
+    let gained = clear.size * 10 * mult;
+    for (const kind of creations.values()) gained += (kind === "zap" ? 120 : 50);
+    score += gained;
+    bumpBest();
+    updateHUD();
+
+    const cellsArr = Array.from(clear);
+    const anchor = cellsArr.length ? cellsArr[Math.floor(cellsArr.length / 2)]
+                                   : creations.keys().next().value;
+    popup(anchor, "+" + gained.toLocaleString(), combo >= 2);
+    if (combo >= 2) comboBanner(combo);
+    sfx(clear.size >= 6 || creations.size ? "special" : "pop", combo - 1);
+
+    // 5) 시간 보너스
+    if (creations.size) {
+      let bonus = 0;
+      for (const kind of creations.values()) bonus += (kind === "zap" ? 2 : 1);
+      addTime(bonus);
+      popup(creations.keys().next().value, "+" + bonus + "초", true);
+      updateHUD();
+    }
+
+    // 6) 터뜨리기
+    for (const i of clear) board[i].el.classList.add("pop");
+    await sleep(POP_MS);
+    for (const i of clear) {
+      board[i].el.remove();
+      board[i] = null;
+    }
+
+    // 7) 특수 젤리로 승격
+    for (const [pos, kind] of creations) {
+      const t = board[pos];
+      if (!t) continue;
+      t.special = kind;
+      paint(t);
+      t.el.classList.add("born");
+      const el = t.el;
+      setTimeout(() => el.classList.remove("born"), 460);
+    }
+
+    // 8) 중력 + 보충
+    const created = gravity();
+    if (created.length) void boardEl.offsetHeight;   // 리플로우 강제 → 낙하 트랜지션 발동
+    render();
+    await sleep(FALL_MS);
+
+    origin = -1;
+  }
+  return combo;
+}
+
+function gravity() {
+  const created = [];
+  for (let c = 0; c < COLS; c++) {
+    let write = ROWS - 1;
+    for (let r = ROWS - 1; r >= 0; r--) {
+      const t = board[idx(r, c)];
+      if (!t) continue;
+      if (r !== write) { board[idx(write, c)] = t; board[idx(r, c)] = null; }
+      write--;
+    }
+    let above = 1;
+    for (let r = write; r >= 0; r--) {
+      const t = newTile(randType());
+      t.el.style.transform = "translate(" + c * 100 + "%," + (-above * 100) + "%)";
+      boardEl.appendChild(t.el);
+      board[idx(r, c)] = t;
+      created.push(t);
+      above++;
+    }
+  }
+  return created;
+}
+
+/* ── 막힌 판 섞기 ───────────────────── */
+async function reshuffle() {
+  const banner = document.createElement("div");
+  banner.className = "combo";
+  banner.textContent = "섞는 중";
+  boardEl.appendChild(banner);
+  let ok = false;
+  for (let i = 0; i < 400 && !ok; i++) {
+    for (let k = N - 1; k > 0; k--) {
+      const j = Math.floor(Math.random() * (k + 1));
+      const t = board[k]; board[k] = board[j]; board[j] = t;
+    }
+    ok = findRuns().length === 0 && !!findMove();
+  }
+  if (!ok) { buildBoard(); }   // 극히 드문 실패 → 판 재생성
+  else render();
+  setTimeout(() => banner.remove(), 820);
+  await sleep(420);
+}
+
+/* ── 힌트 ───────────────────────────── */
+function clearHint() {
+  clearTimeout(hintTimer);
+  for (const el of Array.from(boardEl.querySelectorAll(".tile.hint"))) el.classList.remove("hint");
+}
+function scheduleHint() {
+  clearHint();
+  if (state !== "playing") return;
+  hintTimer = setTimeout(() => {
+    if (state !== "playing" || busy) return;
+    const m = findMove();
+    if (!m) return;
+    for (const i of m) if (board[i]) board[i].el.classList.add("hint");
+  }, 4500);
+}
+
+/* ── 스왑 ───────────────────────────── */
+async function trySwap(from, to) {
+  if (busy || state !== "playing") return;
+  if (!board[from] || !board[to]) return;
+  busy = true;
+  clearSel();
+  clearHint();
+  sfx("swap");
+
+  board[from].el.classList.add("swapping");
+  board[to].el.classList.add("swapping");
+  swapModel(from, to);
+  render();
+  await sleep(SWAP_MS);
+
+  if (!findRuns().length) {
+    sfx("bad");
+    swapModel(from, to);
+    render();
+    await sleep(SWAP_MS);
+    board[from].el.classList.remove("swapping");
+    board[to].el.classList.remove("swapping");
+    busy = false;
+    scheduleHint();
+    return;
+  }
+
+  board[from].el.classList.remove("swapping");
+  board[to].el.classList.remove("swapping");
+  await resolve(to);
+
+  if (!findMove()) await reshuffle();
+  busy = false;
+  scheduleHint();
+}
+
+function clearSel() {
+  if (sel >= 0 && board[sel]) board[sel].el.classList.remove("sel");
+  sel = -1;
+}
+const adjacent = (a, b) =>
+  (rowOf(a) === rowOf(b) && Math.abs(colOf(a) - colOf(b)) === 1) ||
+  (colOf(a) === colOf(b) && Math.abs(rowOf(a) - rowOf(b)) === 1);
+
+/* ── 입력(탭 선택 + 드래그 밀기) ────── */
+let dragFrom = -1, dragX = 0, dragY = 0, dragged = false;
+
+function cellAt(clientX, clientY) {
+  const r = boardEl.getBoundingClientRect();
+  const c = Math.floor((clientX - r.left) / (r.width / COLS));
+  const rw = Math.floor((clientY - r.top) / (r.height / ROWS));
+  if (c < 0 || c >= COLS || rw < 0 || rw >= ROWS) return -1;
+  return idx(rw, c);
+}
+
+boardEl.addEventListener("pointerdown", e => {
+  if (state !== "playing" || busy) return;
+  const i = cellAt(e.clientX, e.clientY);
+  if (i < 0) return;
+  dragFrom = i; dragX = e.clientX; dragY = e.clientY; dragged = false;
+  try { boardEl.setPointerCapture(e.pointerId); } catch (err) { /* 캡처 실패해도 입력은 계속 */ }
+  clearHint();
+});
+
+boardEl.addEventListener("pointermove", e => {
+  if (dragFrom < 0 || dragged || busy) return;
+  const rect = boardEl.getBoundingClientRect();
+  const cell = rect.width / COLS;
+  const dx = e.clientX - dragX, dy = e.clientY - dragY;
+  if (Math.hypot(dx, dy) < cell * 0.34) return;
+  dragged = true;
+  let r = rowOf(dragFrom), c = colOf(dragFrom);
+  if (Math.abs(dx) > Math.abs(dy)) c += dx > 0 ? 1 : -1;
+  else r += dy > 0 ? 1 : -1;
+  const from = dragFrom;
+  dragFrom = -1;
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+  trySwap(from, idx(r, c));
+});
+
+function endDrag(e) {
+  if (dragFrom < 0) { dragged = false; return; }
+  const from = dragFrom;
+  dragFrom = -1;
+  if (dragged || busy || state !== "playing") { dragged = false; return; }
+  // 드래그가 아니면 탭 선택으로 처리
+  if (sel < 0) {
+    sel = from;
+    if (board[sel]) board[sel].el.classList.add("sel");
+    sfx("swap");
+  } else if (sel === from) {
+    clearSel();
+  } else if (adjacent(sel, from)) {
+    const a = sel;
+    clearSel();
+    trySwap(a, from);
+  } else {
+    clearSel();
+    sel = from;
+    if (board[sel]) board[sel].el.classList.add("sel");
+  }
+  scheduleHint();
+}
+boardEl.addEventListener("pointerup", endDrag);
+boardEl.addEventListener("pointercancel", () => { dragFrom = -1; dragged = false; });
+
+/* ── HUD / 타이머 ───────────────────── */
+/* 최고 기록은 게임이 끝날 때가 아니라 넘어서는 순간 저장한다.
+   판 도중에 닫거나 새로고침해도 기록이 날아가지 않도록. */
+function bumpBest() {
+  if (score <= best) return;
+  best = score;
+  Store.set(String(best));
+  bestEl.textContent = best.toLocaleString();
+}
+
+function updateHUD() {
+  if (score !== shownScore) { shownScore = score; scoreEl.textContent = score.toLocaleString(); }
+  const secs = Math.ceil(timeLeft);
+  if (secs !== shownTime) {
+    shownTime = secs;
+    timeEl.textContent = secs;
+    const low = secs <= 10;
+    clockEl.classList.toggle("low", low);
+    barEl.classList.toggle("low", low);
+  }
+  barFill.style.width = Math.max(0, Math.min(100, (timeLeft / ROUND) * 100)) + "%";
+}
+
+/* 시계 설계 메모
+   - requestAnimationFrame은 탭이 가려지면 아예 호출되지 않아 시계가 조용히 멈춘다. 쓰지 않는다.
+   - 매 틱의 델타를 더하는 방식도 쓰지 않는다. 브라우저가 타이머를 초당 1회로 조여버리면
+     델타 상한에 걸려 시간이 실제보다 느리게 흐른다(실측: 65초 동안 49초만 흘렀다).
+   - 그래서 '끝나는 시각(deadline)'을 잡아두고 매번 실제 시계와의 차이를 읽는다.
+     틱이 늦게 오든 몰려 오든 남은 시간은 항상 정확하다.
+   - 화면이 가려진 동안은 남은 시간을 얼려두고, 돌아오면 deadline을 다시 잡는다. */
+function startClock() {
+  stopClock();
+  deadline = performance.now() + timeLeft * 1000;
+  paused = document.hidden;
+  clockIv = setInterval(clockStep, 100);
+}
+function stopClock() {
+  if (clockIv) { clearInterval(clockIv); clockIv = 0; }
+}
+function clockStep() {
+  if (state !== "playing") { stopClock(); return; }
+  if (document.hidden) {
+    if (!paused) { paused = true; timeLeft = Math.max(0, (deadline - performance.now()) / 1000); }
+    return;
+  }
+  if (paused) { paused = false; deadline = performance.now() + timeLeft * 1000; }
+  timeLeft = (deadline - performance.now()) / 1000;
+  if (timeLeft <= 0) {
+    timeLeft = 0;
+    updateHUD();
+    stopClock();
+    endGame();
+    return;
+  }
+  updateHUD();
+}
+/* 보너스 시간도 deadline을 밀어야 한다(timeLeft만 더하면 다음 틱에 덮어써진다) */
+function addTime(sec) {
+  deadline += sec * 1000;
+  const max = performance.now() + 99000;
+  if (deadline > max) deadline = max;
+  timeLeft = (deadline - performance.now()) / 1000;
+}
+
+/* ── 게임 흐름 ──────────────────────── */
+function startGame() {
+  stopClock();
+  clearHint(); clearSel();
+  state = "playing";
+  busy = false;
+  score = 0; timeLeft = ROUND; shownScore = -1; shownTime = -1;
+  roundBest = best;
+  veilStart.hidden = true;
+  veilOver.hidden = true;
+  buildBoard();
+  updateHUD();
+  sfx("special");
+  startClock();
+  scheduleHint();
+}
+
+async function endGame() {
+  if (state === "over") return;
+  state = "over";
+  stopClock();
+  clearHint(); clearSel();
+  sfx("over");
+  while (busy) await sleep(60);    // 진행 중이던 연쇄는 끝까지 인정
+  bumpBest();
+  const isBest = score > roundBest;
+  finalEl.textContent = score.toLocaleString();
+  newBestEl.hidden = !isBest;
+  noStoreEl.hidden = Store.persists;
+  verdictEl.textContent =
+    score >= 8000 ? "이 정도면 자랑해도 됩니다." :
+    score >= 4000 ? "손끝이 매섭네요. 한 판 더?" :
+    score >= 1500 ? "감 잡았어요. 지금부터가 진짜." :
+                    "몸 풀기 끝. 다시 하면 훨씬 나아져요.";
+  veilOver.hidden = false;
+}
+
+function resetToStart() {
+  stopClock();
+  clearHint(); clearSel();
+  state = "ready";
+  busy = false;
+  score = 0; timeLeft = ROUND; shownScore = -1; shownTime = -1;
+  updateHUD();
+  veilOver.hidden = true;
+  veilStart.hidden = false;
+}
+
+document.getElementById("startBtn").addEventListener("click", startGame);
+document.getElementById("againBtn").addEventListener("click", startGame);
+document.getElementById("restartBtn").addEventListener("click", () => {
+  if (state === "playing") resetToStart(); else startGame();
+});
+
+/* 가려짐/복귀 처리는 clockStep 한 곳에서만 한다(기준을 두 군데 두면 어긋난다). */
+
+/* 첫 화면: 배경으로 실제 보드를 깔아둔다 */
+buildBoard();
+updateHUD();
+})();
+</script>
+
+</html>
