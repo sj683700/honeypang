@@ -2,7 +2,7 @@
 <html lang="ko">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>허니팡</title>
+<title>세리팡</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Jua&display=swap">
@@ -12,18 +12,19 @@
 /* 이 페이지는 하나의 아케이드 화면으로 고정 연출한다(단일 테마).
    모든 색과 배경을 명시적으로 칠해 호스트 테마에 기대지 않는다. */
 :root{
-  --bg:#150F26;
-  --bg-glow:#2E2058;
-  --panel:#221A3B;
-  --panel-2:#2B2250;
-  --cell:#1C1535;
-  --line:rgba(167,150,214,.15);
-  --ink:#F8F3FF;
-  --muted:#A294C9;
-  --gold:#FFC64B;
-  --pink:#FF7BD5;
-  --red:#FF5C6E;
-  --mint:#5BE0A5;
+  /* 보라 안개 → 깊은 남색으로 재조정(탁함 제거·대비 상승). 골드=허니 브랜드로 유지 */
+  --bg:#10131F;
+  --bg-glow:#1E2A4A;
+  --panel:#1A2032;
+  --panel-2:#232B44;
+  --cell:#151A2B;
+  --line:rgba(148,163,205,.16);
+  --ink:#F4F7FF;
+  --muted:#A8B3D6;
+  --gold:#FFC94D;
+  --pink:#FF6FB0;
+  --red:#FF5468;
+  --mint:#43E39C;
   --t-swap:150ms;
   --t-fall:280ms;
   color-scheme:dark;
@@ -41,10 +42,13 @@ body{
     radial-gradient(1100px 620px at 50% -10%, var(--bg-glow), rgba(21,15,38,0) 64%),
     var(--bg);
   color:var(--ink);
-  font-family:'Fredoka','Jua',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  /* 한글 본문은 시스템 고딕으로 — Jua를 본문 스택에 두면 작은 한글이 전부 통통체로 뭉개진다.
+     Jua는 제목·랭크·버튼(디스플레이)에만 개별 지정한다. */
+  font-family:'Fredoka',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif;
   font-weight:400;
   -webkit-font-smoothing:antialiased;
   -webkit-tap-highlight-color:transparent;
+  word-break:keep-all;   /* 한글 어절 중간에서 줄이 끊기지 않게 */
 }
 
 .wrap{
@@ -52,7 +56,7 @@ body{
   max-width:460px;
   display:flex;
   flex-direction:column;
-  gap:12px;
+  gap:11px;
 }
 
 /* ── 헤더 ───────────────────────────── */
@@ -68,7 +72,7 @@ h1{
 }
 h1 em{font-style:normal;color:var(--gold)}
 .tag{
-  font-size:12px;color:var(--muted);margin:6px 0 0;
+  font-size:13px;color:var(--muted);margin:6px 0 0;
 }
 .soundbtn{
   flex:none;border:1px solid var(--line);background:var(--panel);
@@ -89,32 +93,47 @@ h1 em{font-style:normal;color:var(--gold)}
   background:var(--panel);padding:9px 12px 10px;
   display:flex;flex-direction:column;gap:2px;
 }
-.stat .k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stat .k{font-size:10.5px;letter-spacing:.1em;color:var(--muted);font-weight:600}
 .stat .v{font-size:22px;font-weight:600;line-height:1.05;font-variant-numeric:tabular-nums}
 .stat.now .v{color:var(--gold)}
+.stat.now.bump .v{animation:scoreBump .28s cubic-bezier(.34,1.5,.6,1)}
+@keyframes scoreBump{40%{transform:scale(1.16)}100%{transform:scale(1)}}
 .stat.clock .v{color:var(--mint)}
 .stat.clock.low .v{color:var(--red)}
 
 .bar{height:6px;border-radius:999px;background:var(--panel-2);overflow:hidden}
+/* 채움은 width가 아니라 scaleX로 — width 트랜지션은 초당 10회 갱신마다 레이아웃을 다시 계산한다 */
 .bar i{
   display:block;height:100%;width:100%;border-radius:999px;
-  background:linear-gradient(90deg,var(--mint),#8BE8C6);
-  transition:width .12s linear;
+  background:linear-gradient(90deg,var(--mint),#7FF0C2);
+  transform-origin:left;
+  transition:transform .12s linear;
 }
-.bar.low i{background:linear-gradient(90deg,var(--red),#FF9AA6);animation:throb .7s ease-in-out infinite}
+.bar.low i{background:linear-gradient(90deg,var(--red),#FF93A0);animation:throb .7s ease-in-out infinite}
 @keyframes throb{50%{opacity:.5}}
+
+/* FEVER 게이지 */
+.feverrow{display:flex;align-items:center;gap:8px}
+.feverrow .fk{
+  flex:none;font-size:9px;letter-spacing:.2em;font-weight:700;
+  color:var(--muted);transition:color .2s;
+}
+.feverrow .bar{flex:1;height:5px}
+.feverrow .bar i{background:linear-gradient(90deg,#8A6BFF,var(--pink));transition:transform .18s ease-out}
+.feverrow.on .fk{color:var(--pink);animation:throb .5s ease-in-out infinite}
+.feverrow.on .bar i{background:linear-gradient(90deg,var(--gold),var(--pink));transition:transform .12s linear}
 
 /* ── 보드 ───────────────────────────── */
 .stage{position:relative}
 .board{
   position:relative;
-  /* 보드 밖 UI 실측 253px(헤더77+HUD59+게이지6+하단40 + gap48 + 본문패딩28) + 여유 */
-  width:min(100%, calc(100dvh - 258px));
+  /* 보드 밖 UI 실측 253px(헤더77+HUD59+게이지6+피버13+하단40 + gap55 + 본문패딩28) + 여유 */
+  width:min(100%, calc(100dvh - 272px));
   margin:0 auto;
   aspect-ratio:1;
   border-radius:20px;
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(255,198,75,.09), rgba(0,0,0,0) 60%),
+    radial-gradient(120% 90% at 50% 0%, rgba(255,201,77,.08), rgba(0,0,0,0) 60%),
     var(--cell);
   border:1px solid var(--line);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 18px 44px -22px rgba(0,0,0,.9);
@@ -122,6 +141,21 @@ h1 em{font-style:normal;color:var(--gold)}
   touch-action:none;
   container-type:size;
   cursor:pointer;
+  transition:box-shadow .3s;
+}
+.board.shake{animation:shake .32s ease-out}
+@keyframes shake{
+  20%{transform:translate(-5px,3px)}
+  40%{transform:translate(5px,-3px)}
+  60%{transform:translate(-4px,-2px)}
+  80%{transform:translate(3px,2px)}
+}
+.board.fever{
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 0 0 2px rgba(255,123,213,.55),
+    0 0 44px -8px var(--pink),
+    0 18px 44px -22px rgba(0,0,0,.9);
 }
 .grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr)}
 .grid div{border-right:1px solid rgba(255,255,255,.025);border-bottom:1px solid rgba(255,255,255,.025)}
@@ -140,7 +174,7 @@ h1 em{font-style:normal;color:var(--gold)}
 .tile.swapping{transition:transform var(--t-swap) ease-out}
 
 .jelly{
-  width:88%;height:88%;border-radius:30%;
+  width:88%;height:88%;border-radius:34%;
   background-color:var(--j,#888);
   background-image:
     radial-gradient(circle at 30% 24%, rgba(255,255,255,.46), rgba(255,255,255,0) 44%),
@@ -153,7 +187,7 @@ h1 em{font-style:normal;color:var(--gold)}
   position:relative;
   transition:transform .16s cubic-bezier(.34,1.4,.6,1), box-shadow .16s;
 }
-.face{font-size:26px;font-size:7.6cqmin;line-height:1;user-select:none}
+.face{width:64%;height:64%;display:block;pointer-events:none}
 
 .tile.sel .jelly{
   transform:scale(1.14);
@@ -170,23 +204,34 @@ h1 em{font-style:normal;color:var(--gold)}
 .tile.born .jelly{animation:born .42s cubic-bezier(.34,1.6,.5,1)}
 @keyframes born{0%{transform:scale(.2) rotate(-30deg)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
 
-/* 특수 젤리 */
+/* ── 특수 젤리 ──────────────────────── */
+/* 폭탄: 금테 + 도화선 스파크 배지 */
 .jelly.bomb{box-shadow:0 0 0 3px var(--gold), 0 0 20px -4px var(--gold), inset 0 -2px 5px rgba(0,0,0,.28)}
-.jelly.bomb::after{
-  content:"💥";position:absolute;right:-6%;bottom:-6%;
-  font-size:4.4cqmin;line-height:1;
+.jelly.bomb .badge{
+  position:absolute;right:-10%;bottom:-10%;width:44%;height:44%;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));
+  animation:sparkle .9s ease-in-out infinite;
 }
-.jelly.zap{
+@keyframes sparkle{50%{transform:scale(1.25) rotate(18deg)}}
+
+/* 십자: 가로세로 빛줄기 */
+.jelly.cross{box-shadow:0 0 0 3px #BFE3FF, 0 0 22px -3px #56B8FF, inset 0 -2px 5px rgba(0,0,0,.28)}
+.jelly.cross .beam{position:absolute;pointer-events:none;border-radius:999px;animation:beamPulse 1.1s ease-in-out infinite}
+.jelly.cross .beam.h{left:-22%;right:-22%;top:44%;height:12%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent)}
+.jelly.cross .beam.v{top:-22%;bottom:-22%;left:44%;width:12%;background:linear-gradient(180deg,transparent,rgba(255,255,255,.9),transparent)}
+@keyframes beamPulse{50%{opacity:.35}}
+
+/* 레인보우: 무지개 몸통 + 별 얼굴, 아무 젤리와 바꾸면 그 색 전멸 */
+.jelly.rainbow{
   background-image:
-    conic-gradient(from 0deg,#FF7BA8,#FFD24B,#5BE0A5,#7EC8FF,#A79BFF,#FF7A55,#FF7BA8),
+    conic-gradient(from 0deg,#FF6FA5,#FFCB3D,#3EDD92,#56B8FF,#9F8BFF,#FF7A45,#FF6FA5),
     radial-gradient(circle at 30% 24%, rgba(255,255,255,.5), rgba(255,255,255,0) 46%);
   box-shadow:0 0 0 3px var(--ink), 0 0 24px -2px var(--pink), inset 0 -2px 5px rgba(0,0,0,.3);
   animation:spin 4s linear infinite;
 }
 @keyframes spin{to{filter:hue-rotate(360deg)}}
 
-/* 보드 위 이펙트 */
+/* ── 보드 위 이펙트 ─────────────────── */
 .fx{
   position:absolute;transform:translate(-50%,-50%);
   pointer-events:none;font-weight:600;font-size:15px;
@@ -206,12 +251,25 @@ h1 em{font-style:normal;color:var(--gold)}
   font-size:38px;color:var(--pink);
   text-shadow:0 4px 20px rgba(0,0,0,.8);
   animation:comboIn .78s cubic-bezier(.2,.9,.3,1) forwards;
+  white-space:nowrap;
 }
+.combo.hot{font-size:46px;color:var(--gold)}
 @keyframes comboIn{
   0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(-8deg)}
   25%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(2deg)}
   70%{opacity:1;transform:translate(-50%,-56%) scale(1)}
   100%{opacity:0;transform:translate(-50%,-70%) scale(.95)}
+}
+
+/* 팡 파티클(DOM 기반, 동시 개수 상한으로 성능 보호) */
+.p{
+  position:absolute;width:3.2cqmin;height:3.2cqmin;border-radius:50%;
+  background:var(--c,#fff);pointer-events:none;
+  transform:translate(-50%,-50%);
+  animation:fly .55s cubic-bezier(.2,.7,.4,1) forwards;
+}
+@keyframes fly{
+  to{transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.15);opacity:0}
 }
 
 /* ── 오버레이 ───────────────────────── */
@@ -223,6 +281,7 @@ h1 em{font-style:normal;color:var(--gold)}
   gap:10px;padding:26px;text-align:center;
   border:1px solid var(--line);
   animation:veilIn .28s ease-out;
+  overflow-y:auto;   /* 짧은 화면에서 가이드가 보드 높이를 넘으면 스크롤 */
 }
 @keyframes veilIn{from{opacity:0}to{opacity:1}}
 .veil[hidden]{display:none}
@@ -230,30 +289,91 @@ h1 em{font-style:normal;color:var(--gold)}
   font-family:'Jua',sans-serif;font-weight:400;font-size:30px;
   margin:0;line-height:1.15;text-wrap:balance;
 }
-.veil p{margin:0;color:var(--muted);font-size:14px;line-height:1.65;max-width:30ch;text-wrap:pretty}
+.veil p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.65;max-width:30ch;text-wrap:pretty}
+.veil .rank{
+  font-family:'Jua',sans-serif;font-size:58px;line-height:1;
+  color:var(--rank-c,var(--muted));
+  text-shadow:0 0 26px var(--rank-c,transparent);
+  animation:rankIn .5s cubic-bezier(.3,1.5,.5,1);
+}
+@keyframes rankIn{0%{transform:scale(.3) rotate(-14deg);opacity:0}100%{transform:scale(1) rotate(0)}}
 .veil .final{
-  font-size:52px;font-weight:600;color:var(--gold);line-height:1;
-  font-variant-numeric:tabular-nums;margin:2px 0;
+  font-size:44px;font-weight:600;color:var(--gold);line-height:1;
+  font-variant-numeric:tabular-nums;margin:0;
 }
 .veil .newbest{color:var(--pink);font-weight:600;font-size:14px}
-.veil .note{font-size:12px;color:var(--muted);opacity:.8;max-width:32ch;line-height:1.55}
+.veil .coupon{
+  display:flex;flex-direction:column;gap:3px;align-items:center;
+  border:2px dashed var(--gold);border-radius:14px;
+  background:rgba(255,201,77,.08);padding:10px 20px;margin:4px 0;
+  animation:couponIn .5s cubic-bezier(.3,1.5,.5,1);
+}
+@keyframes couponIn{0%{transform:scale(.5) rotate(-4deg);opacity:0}100%{transform:scale(1) rotate(0)}}
+.veil .coupon[hidden]{display:none}
+.veil .coupon .ck{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.veil .coupon .cv{font-size:16px;font-weight:600;color:var(--ink)}
+.veil .coupon .cn{font-size:11px;color:var(--muted)}
+.veil .nextgoal{font-size:12.5px;color:var(--muted)}
+.veil .nextgoal b{color:var(--gold);font-weight:600}
+.veil .nextgoal[hidden]{display:none}
+.veil .note{font-size:12.5px;color:var(--muted);opacity:.85;max-width:32ch;line-height:1.55}
 .veil .note[hidden]{display:none}
 .play{
   margin-top:8px;border:0;cursor:pointer;
   font-family:'Jua',sans-serif;font-size:19px;
-  color:#2A1B00;background:linear-gradient(180deg,#FFDA84,var(--gold));
+  color:#2A1B00;background:linear-gradient(180deg,#FFDE8A,var(--gold));
   padding:13px 34px;border-radius:999px;
-  box-shadow:0 8px 20px -8px rgba(255,198,75,.85), inset 0 -2px 0 rgba(0,0,0,.14);
+  box-shadow:0 8px 20px -8px rgba(255,201,77,.85), inset 0 -2px 0 rgba(0,0,0,.14);
   transition:transform .14s cubic-bezier(.34,1.5,.6,1), box-shadow .14s;
 }
-.play:hover{transform:translateY(-2px);box-shadow:0 12px 26px -8px rgba(255,198,75,.9), inset 0 -2px 0 rgba(0,0,0,.14)}
+.play:hover{transform:translateY(-2px);box-shadow:0 12px 26px -8px rgba(255,201,77,.9), inset 0 -2px 0 rgba(0,0,0,.14)}
 .play:active{transform:translateY(1px)}
-.legend{display:flex;flex-direction:column;gap:5px;margin-top:4px;font-size:13px;color:var(--muted)}
-.legend b{color:var(--ink);font-weight:600}
+/* 시작 가이드: 가운데 정렬 문장 뭉치 대신 [모양 칩 · 조건 · 효과] 3열 표.
+   왼쪽 정렬이라야 훑어진다. 칩은 실제 특수젤리 생김새의 축소판. */
+.guide{
+  display:grid;grid-template-columns:auto auto 1fr;
+  align-items:center;column-gap:12px;row-gap:11px;
+  margin-top:6px;text-align:left;
+  font-size:13.5px;color:var(--muted);line-height:1.4;
+}
+.guide .g-when{color:var(--ink);font-weight:600;white-space:nowrap}
+.guide .g-eff b{font-weight:700;margin-right:5px}
+.guide .lg-bomb{color:var(--gold)}
+.guide .lg-cross{color:#56B8FF}
+.guide .lg-rainbow{
+  background:linear-gradient(90deg,#FF6FA5,#FFCB3D,#3EDD92,#56B8FF);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.guide .lg-fever{color:var(--pink)}
+.guide .lg-coupon{color:var(--gold)}
+
+.mini{
+  width:26px;height:26px;border-radius:35%;flex:none;position:relative;
+  background-image:
+    radial-gradient(circle at 30% 24%, rgba(255,255,255,.45), rgba(255,255,255,0) 46%),
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.22));
+  box-shadow:inset 0 -1px 3px rgba(0,0,0,.3);
+}
+.mini.m-bomb{background-color:#FFCB3D;box-shadow:0 0 0 2px var(--gold), 0 0 10px -2px var(--gold), inset 0 -1px 3px rgba(0,0,0,.3)}
+.mini.m-cross{background-color:#56B8FF;box-shadow:0 0 0 2px #BFE3FF, inset 0 -1px 3px rgba(0,0,0,.3)}
+.mini.m-cross::before,.mini.m-cross::after{
+  content:"";position:absolute;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);
+  border-radius:999px;
+}
+.mini.m-cross::before{left:-24%;right:-24%;top:44%;height:13%}
+.mini.m-cross::after{top:-24%;bottom:-24%;left:44%;width:13%;background:linear-gradient(180deg,transparent,rgba(255,255,255,.95),transparent)}
+.mini.m-rainbow{
+  border-radius:50%;
+  background-image:
+    conic-gradient(from 0deg,#FF6FA5,#FFCB3D,#3EDD92,#56B8FF,#9F8BFF,#FF7A45,#FF6FA5),
+    radial-gradient(circle at 30% 24%, rgba(255,255,255,.5), rgba(255,255,255,0) 46%);
+}
+.mini.m-fever{border-radius:8px;background-color:transparent;background-image:linear-gradient(135deg,#8A6BFF,var(--pink));box-shadow:0 0 10px -2px var(--pink)}
+.mini.m-coupon{border-radius:7px;background:rgba(255,201,77,.1);border:2px dashed var(--gold);box-shadow:none}
 
 /* ── 하단 ───────────────────────────── */
 .foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.rules{font-size:11.5px;color:var(--muted);line-height:1.5}
+.rules{font-size:12.5px;color:var(--muted);line-height:1.55}
 .rules b{color:var(--ink);font-weight:600}
 .restart{
   flex:none;border:1px solid var(--line);background:var(--panel);color:var(--muted);
@@ -267,29 +387,40 @@ h1 em{font-style:normal;color:var(--gold)}
 @media (max-width:420px){
   h1{font-size:29px}
   .stat .v{font-size:19px}
-  .board{width:min(100%, calc(100dvh - 250px))}
+  .board{width:min(100%, calc(100dvh - 264px))}
+}
+@media (max-height:700px){
+  .veil{gap:8px;padding:18px;justify-content:flex-start}
+  .veil h2{font-size:24px}
+  .guide{row-gap:7px;font-size:12.5px}
+  .mini{width:22px;height:22px}
 }
 @media (prefers-reduced-motion:reduce){
-  .bar.low i,.jelly.zap,.tile.hint .jelly{animation:none}
+  .bar.low i,.jelly.rainbow,.tile.hint .jelly,.jelly.bomb .badge,
+  .jelly.cross .beam,.feverrow.on .fk,.board.shake,.stat.now.bump .v{animation:none}
 }
 </style>
 
 <main class="wrap">
   <header class="top">
     <div>
-      <p class="eyebrow">60초 도전</p>
-      <h1>허니<em>팡</em></h1>
+      <p class="eyebrow">A game for Sery</p>
+      <h1>세리<em>팡</em></h1>
       <p class="tag">같은 젤리 3개를 나란히 붙이면 팡!</p>
     </div>
-    <button class="soundbtn" id="sound" aria-pressed="true">🔊 소리</button>
+    <button class="soundbtn" id="sound" aria-pressed="true">소리 켬</button>
   </header>
 
   <section class="hud">
-    <div class="stat now"><span class="k">점수</span><span class="v" id="score">0</span></div>
+    <div class="stat now" id="scoreStat"><span class="k" id="scoreLabel">점수</span><span class="v" id="score">0</span></div>
     <div class="stat"><span class="k">최고</span><span class="v" id="best">0</span></div>
     <div class="stat clock" id="clock"><span class="k">남은 시간</span><span class="v" id="time">60</span></div>
   </section>
   <div class="bar" id="bar"><i id="barfill"></i></div>
+  <div class="feverrow" id="feverRow" aria-hidden="true">
+    <span class="fk">FEVER</span>
+    <div class="bar"><i id="feverFill" style="transform:scaleX(0)"></i></div>
+  </div>
 
   <div class="stage">
     <div class="board" id="board">
@@ -297,20 +428,43 @@ h1 em{font-style:normal;color:var(--gold)}
     </div>
 
     <div class="veil" id="veilStart">
-      <h2>60초, 시작할까?</h2>
-      <p>젤리를 옆칸으로 밀어서 같은 얼굴 3개를 만들면 사라져. 위에서 떨어진 젤리가 또 맞으면 연쇄 콤보!</p>
-      <div class="legend">
-        <span><b>4개</b> 연결 → 💥 폭탄 &nbsp;·&nbsp; 주변 3×3 제거</span>
-        <span><b>5개</b> 연결 → ⚡ 번개 &nbsp;·&nbsp; 가로·세로 한 줄 제거</span>
-        <span>특수 젤리를 만들면 <b>시간이 늘어나</b></span>
+      <h2>세리야, 60초 시작할까?</h2>
+      <p>젤리를 밀어서 같은 얼굴 3개를 만들면 팡! 연쇄가 이어질수록 점수가 배로 올라가.</p>
+      <div class="guide">
+        <span class="mini m-bomb" aria-hidden="true"></span>
+        <span class="g-when">4개 일렬</span>
+        <span class="g-eff"><b class="lg-bomb">폭탄</b> 주변 3×3 제거</span>
+
+        <span class="mini m-cross" aria-hidden="true"></span>
+        <span class="g-when">ㄱ·ㅜ자</span>
+        <span class="g-eff"><b class="lg-cross">십자</b> 가로세로 한 줄</span>
+
+        <span class="mini m-rainbow" aria-hidden="true"></span>
+        <span class="g-when">5개 일렬</span>
+        <span class="g-eff"><b class="lg-rainbow">레인보우</b> 바꾼 색 전멸</span>
+
+        <span class="mini m-fever" aria-hidden="true"></span>
+        <span class="g-when">게이지 풀</span>
+        <span class="g-eff"><b class="lg-fever">FEVER</b> 8초간 점수 ×2</span>
+
+        <span class="mini m-coupon" aria-hidden="true"></span>
+        <span class="g-when">랭크 달성</span>
+        <span class="g-eff"><b class="lg-coupon">진짜 쿠폰</b> 첫 달성 때 지급</span>
       </div>
       <button class="play" id="startBtn">시작</button>
     </div>
 
     <div class="veil" id="veilOver" hidden>
       <h2>시간 종료</h2>
+      <div class="rank" id="rankEl">B</div>
       <div class="final" id="finalScore">0</div>
-      <span class="newbest" id="newBest" hidden>🎉 최고 기록 갱신!</span>
+      <span class="newbest" id="newBest" hidden>최고 기록 갱신!</span>
+      <div class="coupon" id="couponBox" hidden>
+        <span class="ck">쿠폰 획득</span>
+        <span class="cv" id="couponText"></span>
+        <span class="cn">이 화면을 캡처해서 보여주면 실물로 지급됩니다</span>
+      </div>
+      <p class="nextgoal" id="nextGoal" hidden></p>
       <p id="verdict"></p>
       <p class="note" id="noStore" hidden>이 화면에서는 브라우저가 저장을 막고 있어 최고 기록이 남지 않아요. 파일을 내려받아 열면 기록이 저장됩니다.</p>
       <button class="play" id="againBtn">다시하기</button>
@@ -318,7 +472,7 @@ h1 em{font-style:normal;color:var(--gold)}
   </div>
 
   <div class="foot">
-    <p class="rules"><b>3개</b> 팡 · <b>4개</b> 💥 폭탄 · <b>5개</b> ⚡ 번개 · 연쇄할수록 점수 배수 ↑</p>
+    <p class="rules"><b>4개</b> 폭탄 · <b>ㄱ자</b> 십자 · <b>5개</b> 레인보우 · <b>FEVER ×2</b></p>
     <button class="restart" id="restartBtn">처음부터</button>
   </div>
 </main>
@@ -330,14 +484,32 @@ h1 em{font-style:normal;color:var(--gold)}
 /* ── 상수 ───────────────────────────── */
 const COLS = 7, ROWS = 7, N = COLS * ROWS;
 const ROUND = 60;                 // 제한 시간(초)
+const FEVER_NEED = 28;            // FEVER 발동에 필요한 팡 개수
+const FEVER_SEC  = 8;             // FEVER 지속(게임 시계 기준 초)
+
+/* 젤리 6종: 색 + 실루엣 + 손으로 그린 SVG 얼굴.
+   이모지를 쓰지 않는 이유: OS마다 다르게 렌더되고, 어느 기기에서나 똑같이
+   보이는 우리만의 캐릭터가 아니게 된다. 색약 사용자를 위해 색 외에
+   실루엣(모서리 곡률)과 표정도 종류마다 다르게 간다. */
+const INK = "#2E1A33";
+const EYES = 'stroke="' + INK + '" stroke-width="6.5" stroke-linecap="round" fill="none"';
 const TYPES = [
-  { e:"🐰", c:"#FF7BA8" },
-  { e:"🐱", c:"#FFD24B" },
-  { e:"🐸", c:"#5BE0A5" },
-  { e:"🐼", c:"#7EC8FF" },
-  { e:"🐨", c:"#A79BFF" },
-  { e:"🦊", c:"#FF7A55" },
+  { c:"#FF6FA5", r:"46%",                 // 분홍: 눈웃음
+    f:'<g ' + EYES + '><path d="M29 45q7 -9 14 0"/><path d="M57 45q7 -9 14 0"/><path d="M41 59q9 9 18 0"/></g><circle cx="21" cy="57" r="5.5" fill="#fff" opacity=".45"/><circle cx="79" cy="57" r="5.5" fill="#fff" opacity=".45"/>' },
+  { c:"#FFCB3D", r:"30%",                 // 노랑: 활짝
+    f:'<circle cx="36" cy="44" r="7.5" fill="' + INK + '"/><circle cx="64" cy="44" r="7.5" fill="' + INK + '"/><circle cx="38.5" cy="41.5" r="2.4" fill="#fff"/><circle cx="66.5" cy="41.5" r="2.4" fill="#fff"/><path d="M40 57q10 13 20 0z" fill="' + INK + '"/>' },
+  { c:"#3EDD92", r:"30% 30% 46% 46%",     // 초록: 졸린 고양이
+    f:'<g ' + EYES + '><path d="M28 44h16"/><path d="M56 44h16"/><path d="M41 57q4.5 7 9 0t9 0"/></g>' },
+  { c:"#56B8FF", r:"50%",                 // 파랑: 깜짝
+    f:'<circle cx="35" cy="43" r="8" fill="' + INK + '"/><circle cx="65" cy="43" r="8" fill="' + INK + '"/><circle cx="37.5" cy="40" r="2.6" fill="#fff"/><circle cx="67.5" cy="40" r="2.6" fill="#fff"/><circle cx="50" cy="60" r="6" fill="' + INK + '"/>' },
+  { c:"#9F8BFF", r:"26%",                 // 보라: 신나서 메롱
+    f:'<g ' + EYES + '><path d="M29 46l7 -7 7 7"/><path d="M57 46l7 -7 7 7"/></g><path d="M42 56q8 10 16 0z" fill="' + INK + '"/><path d="M46 58q4 7 8 0z" fill="#FF8FB8"/>' },
+  { c:"#FF7A45", r:"42% 24% 42% 24%",     // 주황: 윙크
+    f:'<circle cx="36" cy="44" r="7" fill="' + INK + '"/><circle cx="38.5" cy="41.5" r="2.2" fill="#fff"/><g ' + EYES + '><path d="M58 44q7 -8 14 0"/><path d="M38 57q12 12 24 0"/></g>' },
 ];
+const STAR_FACE = '<path d="M50 26l7.6 15.4 17 2.5 -12.3 12 2.9 16.9 -15.2 -8 -15.2 8 2.9 -16.9 -12.3 -12 17 -2.5z" fill="#fff" opacity=".95"/>';
+const SPARK_BADGE = '<svg class="badge" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3l4 10 10 -4 -6 9 9 6 -11 1 2 11 -8 -8 -8 8 2 -11 -11 -1 9 -6 -6 -9 10 4z" fill="#FFC94D" stroke="#7A4A00" stroke-width="2"/></svg>';
+
 const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const SWAP_MS = RM ? 70  : 150;
 const POP_MS  = RM ? 90  : 200;
@@ -348,13 +520,18 @@ document.documentElement.style.setProperty("--t-fall", FALL_MS + "ms");
 /* ── DOM ────────────────────────────── */
 const boardEl   = document.getElementById("board");
 const scoreEl   = document.getElementById("score");
+const scoreStat = document.getElementById("scoreStat");
+const scoreLbl  = document.getElementById("scoreLabel");
 const bestEl    = document.getElementById("best");
 const timeEl    = document.getElementById("time");
 const clockEl   = document.getElementById("clock");
 const barEl     = document.getElementById("bar");
 const barFill   = document.getElementById("barfill");
+const feverRow  = document.getElementById("feverRow");
+const feverFill = document.getElementById("feverFill");
 const veilStart = document.getElementById("veilStart");
 const veilOver  = document.getElementById("veilOver");
+const rankEl    = document.getElementById("rankEl");
 const finalEl   = document.getElementById("finalScore");
 const newBestEl = document.getElementById("newBest");
 const verdictEl = document.getElementById("verdict");
@@ -373,15 +550,18 @@ let score = 0, timeLeft = ROUND, shownTime = -1, shownScore = -1;
 let sel = -1, uid = 0, clockIv = 0, hintTimer = 0;
 let deadline = 0, paused = false;
 let soundOn = true;
+let fever = 0, feverOn = false, feverEndAt = 0;   // feverEndAt은 timeLeft 기준
+let liveParticles = 0;
 
 /* ── 저장소 ─────────────────────────
    퍼블리시된 아티팩트는 iframe 안에서 도는데, 그 환경이 브라우저 저장소를
    막아버리는 경우가 있다(실제로 최고 기록이 안 남는 제보를 받음).
    그래서 한 가지에 걸지 않고 쓸 수 있는 걸 차례로 찾아 쓴다.
    전부 막혔으면 조용히 넘어가지 말고 종료 화면에서 사실대로 알린다. */
+const KEY_BEST = "seripang.best";
+const KEY_COUPONS = "seripang.coupons";
 const Store = (function () {
-  const KEY = "honeypang.best";
-  const PROBE = KEY + ".probe";
+  const PROBE = "seripang.probe";
   function okLocal() {
     try { localStorage.setItem(PROBE, "1"); const v = localStorage.getItem(PROBE); localStorage.removeItem(PROBE); return v === "1"; }
     catch (e) { return false; }
@@ -403,27 +583,30 @@ const Store = (function () {
   return {
     mode: mode,
     persists: mode !== "none",
-    get: function () {
+    get: function (key) {
       try {
-        if (mode === "local") return localStorage.getItem(KEY);
-        if (mode === "session") return sessionStorage.getItem(KEY);
+        if (mode === "local") return localStorage.getItem(key);
+        if (mode === "session") return sessionStorage.getItem(key);
         if (mode === "cookie") {
-          const m = document.cookie.match(/(?:^|;\s*)honeypang\.best=([^;]*)/);
+          const m = document.cookie.match(new RegExp("(?:^|;\\s*)" + key.replace(/\./g, "\\.") + "=([^;]*)"));
           return m ? decodeURIComponent(m[1]) : null;
         }
       } catch (e) {}
       return null;
     },
-    set: function (v) {
+    set: function (key, v) {
       try {
-        if (mode === "local") localStorage.setItem(KEY, v);
-        else if (mode === "session") sessionStorage.setItem(KEY, v);
-        else if (mode === "cookie") document.cookie = KEY + "=" + encodeURIComponent(v) + "; path=/; max-age=31536000; SameSite=Lax";
+        if (mode === "local") localStorage.setItem(key, v);
+        else if (mode === "session") sessionStorage.setItem(key, v);
+        else if (mode === "cookie") document.cookie = key + "=" + encodeURIComponent(v) + "; path=/; max-age=31536000; SameSite=Lax";
       } catch (e) {}
     }
   };
 })();
-let best = parseInt(Store.get() || "0", 10) || 0;
+let best = parseInt(Store.get(KEY_BEST) || "0", 10) || 0;
+let claimed = [];   // 이미 발급된 쿠폰의 랭크 목록
+try { claimed = JSON.parse(Store.get(KEY_COUPONS) || "[]"); if (!Array.isArray(claimed)) claimed = []; }
+catch (e) { claimed = []; }
 let roundBest = best;   // 이번 판 시작 시점의 최고 기록(갱신 배지 판정용)
 bestEl.textContent = best.toLocaleString();
 
@@ -451,11 +634,16 @@ function sfx(kind, step) {
   } else if (kind === "swap")    { f = 540; dur = 0.05; type = "sine";     vol = 0.07; }
   else if (kind === "bad")       { f = 150; dur = 0.14; type = "sawtooth"; vol = 0.06; }
   else if (kind === "special")   { f = 760; dur = 0.26; type = "square";   vol = 0.09; }
+  else if (kind === "rainbow")   { f = 520; dur = 0.5;  type = "square";   vol = 0.1;  }
+  else if (kind === "fever")     { f = 440; dur = 0.6;  type = "triangle"; vol = 0.16; }
+  else if (kind === "tick")      { f = 900; dur = 0.04; type = "sine";     vol = 0.09; }
   else if (kind === "over")      { f = 330; dur = 0.55; type = "sine";     vol = 0.13; }
   o.type = type;
   o.frequency.setValueAtTime(f, t);
   if (kind === "over")    o.frequency.exponentialRampToValueAtTime(f / 2.5, t + dur);
   if (kind === "special") o.frequency.exponentialRampToValueAtTime(f * 2,   t + dur);
+  if (kind === "rainbow") o.frequency.exponentialRampToValueAtTime(f * 3,   t + dur);
+  if (kind === "fever")   o.frequency.exponentialRampToValueAtTime(f * 2.5, t + dur);
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -464,7 +652,7 @@ function sfx(kind, step) {
 soundBtn.addEventListener("click", () => {
   soundOn = !soundOn;
   soundBtn.setAttribute("aria-pressed", String(soundOn));
-  soundBtn.textContent = soundOn ? "🔊 소리" : "🔇 소리";
+  soundBtn.textContent = soundOn ? "소리 켬" : "소리 끔";
   if (soundOn) sfx("swap");
 });
 
@@ -489,8 +677,13 @@ function newTile(type) {
 function paint(t) {
   const d = TYPES[t.type];
   t.jelly.style.setProperty("--j", d.c);
-  t.jelly.className = "jelly" + (t.special === "bomb" ? " bomb" : t.special === "zap" ? " zap" : "");
-  t.jelly.innerHTML = '<span class="face">' + (t.special === "zap" ? "⚡" : d.e) + "</span>";
+  t.jelly.style.borderRadius = t.special === "rainbow" ? "40%" : d.r;
+  t.jelly.className = "jelly" + (t.special ? " " + t.special : "");
+  let inner = '<svg class="face" viewBox="0 0 100 100" aria-hidden="true">'
+            + (t.special === "rainbow" ? STAR_FACE : d.f) + "</svg>";
+  if (t.special === "bomb")  inner += SPARK_BADGE;
+  if (t.special === "cross") inner += '<span class="beam h"></span><span class="beam v"></span>';
+  t.jelly.innerHTML = inner;
 }
 function place(t, i) {
   t.el.style.transform = "translate(" + colOf(i) * 100 + "%," + rowOf(i) * 100 + "%)";
@@ -500,19 +693,23 @@ function render() {
 }
 
 /* ── 매치 판정 ──────────────────────── */
+/* 레인보우는 색이 있어도 일렬 매치에 끼지 않는다(스왑으로만 발동).
+   안 그러면 승격 직후 자기 색 낙하 매치에 휩쓸려 조용히 사라진다. */
+const matchable = t => t && t.special !== "rainbow";
+
 function findRuns() {
   const runs = [];
   for (let r = 0; r < ROWS; r++) {
     let c = 0;
     while (c < COLS) {
       const t = board[idx(r, c)];
-      if (!t) { c++; continue; }
+      if (!matchable(t)) { c++; continue; }
       let e = c + 1;
-      while (e < COLS && board[idx(r, e)] && board[idx(r, e)].type === t.type) e++;
+      while (e < COLS && matchable(board[idx(r, e)]) && board[idx(r, e)].type === t.type) e++;
       if (e - c >= 3) {
         const cells = [];
         for (let k = c; k < e; k++) cells.push(idx(r, k));
-        runs.push({ cells, type: t.type });
+        runs.push({ cells, type: t.type, dir: "h" });
       }
       c = e;
     }
@@ -521,23 +718,70 @@ function findRuns() {
     let r = 0;
     while (r < ROWS) {
       const t = board[idx(r, c)];
-      if (!t) { r++; continue; }
+      if (!matchable(t)) { r++; continue; }
       let e = r + 1;
-      while (e < ROWS && board[idx(e, c)] && board[idx(e, c)].type === t.type) e++;
+      while (e < ROWS && matchable(board[idx(e, c)]) && board[idx(e, c)].type === t.type) e++;
       if (e - r >= 3) {
         const cells = [];
         for (let k = r; k < e; k++) cells.push(idx(k, c));
-        runs.push({ cells, type: t.type });
+        runs.push({ cells, type: t.type, dir: "v" });
       }
       r = e;
     }
   }
   return runs;
 }
+
+/* 같은 칸을 공유하는 런끼리 묶어 모양을 판정한다.
+   가로+세로가 만나면 ㄱ/ㅜ/십자 → cross, 5개 일렬 → rainbow, 4개 일렬 → bomb */
+function groupRuns(runs) {
+  const parent = runs.map((_, i) => i);
+  const find = x => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+  for (let i = 0; i < runs.length; i++) {
+    for (let j = i + 1; j < runs.length; j++) {
+      if (runs[i].type !== runs[j].type) continue;
+      if (runs[i].cells.some(c => runs[j].cells.indexOf(c) >= 0)) parent[find(i)] = find(j);
+    }
+  }
+  const byRoot = new Map();
+  for (let i = 0; i < runs.length; i++) {
+    const root = find(i);
+    if (!byRoot.has(root)) byRoot.set(root, []);
+    byRoot.get(root).push(runs[i]);
+  }
+  const groups = [];
+  for (const members of byRoot.values()) {
+    const cells = new Set();
+    let hasH = false, hasV = false, maxLen = 0, crossAt = -1;
+    for (const run of members) {
+      for (const c of run.cells) cells.add(c);
+      if (run.dir === "h") hasH = true; else hasV = true;
+      if (run.cells.length > maxLen) maxLen = run.cells.length;
+    }
+    if (hasH && hasV) {
+      // 교차점 = 가로런과 세로런에 동시에 속한 칸
+      const h = members.find(m => m.dir === "h"), v = members.find(m => m.dir === "v");
+      crossAt = h.cells.find(c => v.cells.indexOf(c) >= 0);
+      if (crossAt === undefined) crossAt = -1;
+    }
+    const make = hasH && hasV ? "cross" : maxLen >= 5 ? "rainbow" : maxLen === 4 ? "bomb" : null;
+    groups.push({ cells, make, crossAt, type: members[0].type });
+  }
+  return groups;
+}
 function swapModel(a, b) { const t = board[a]; board[a] = board[b]; board[b] = t; }
 
 /* 움직일 수 있는 수가 남았는지 / 힌트 찾기 */
 function findMove() {
+  // 레인보우는 어느 방향으로 밀어도 항상 유효한 수
+  for (let i = 0; i < N; i++) {
+    if (board[i] && board[i].special === "rainbow") {
+      const r = rowOf(i), c = colOf(i);
+      const nb = c + 1 < COLS ? idx(r, c + 1) : c - 1 >= 0 ? idx(r, c - 1)
+               : r + 1 < ROWS ? idx(r + 1, c) : idx(r - 1, c);
+      return [i, nb];
+    }
+  }
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
     const a = idx(r, c);
     if (c + 1 < COLS) {
@@ -557,7 +801,8 @@ function findMove() {
 /* ── 보드 생성 ──────────────────────── */
 function buildBoard() {
   for (const el of Array.from(boardEl.querySelectorAll(".tile"))) el.remove();
-  for (const el of Array.from(boardEl.querySelectorAll(".fx,.combo"))) el.remove();
+  for (const el of Array.from(boardEl.querySelectorAll(".fx,.combo,.p"))) el.remove();
+  liveParticles = 0;
   for (let attempt = 0; attempt < 60; attempt++) {
     board = new Array(N).fill(null);
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
@@ -582,18 +827,53 @@ function buildBoard() {
 /* ── 특수 젤리 폭발 범위 ────────────── */
 function blastCells(i, kind) {
   const out = [];
+  const r = rowOf(i), c = colOf(i);
   if (kind === "bomb") {
-    const r = rowOf(i), c = colOf(i);
     for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
       const nr = r + dr, nc = c + dc;
       if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) out.push(idx(nr, nc));
     }
-  } else {
-    const r = rowOf(i), c = colOf(i);
+  } else if (kind === "cross") {
     for (let k = 0; k < COLS; k++) out.push(idx(r, k));
     for (let k = 0; k < ROWS; k++) out.push(idx(k, c));
   }
   return out;
+}
+
+/* 지워질 칸 집합에 특수 젤리가 섞여 있으면 연쇄 폭발시킨다.
+   레인보우가 휘말리면 남은 색 중 하나를 골라 그 색 전부를 추가로 지운다. */
+function chainSpecials(clear) {
+  const queue = [];
+  for (const i of clear) if (board[i] && board[i].special) queue.push(i);
+  const fired = new Set();
+  while (queue.length) {
+    const i = queue.pop();
+    if (fired.has(i)) continue;
+    fired.add(i);
+    const t = board[i];
+    if (!t || !t.special) continue;
+    if (t.special === "rainbow") {
+      const alive = [];
+      for (let k = 0; k < N; k++) if (board[k] && !clear.has(k) && board[k].special !== "rainbow") alive.push(k);
+      if (alive.length) {
+        const pick = board[alive[Math.floor(Math.random() * alive.length)]].type;
+        for (const k of alive) {
+          if (board[k].type === pick) {
+            clear.add(k);
+            if (board[k].special) queue.push(k);
+          }
+        }
+      }
+      continue;
+    }
+    for (const j of blastCells(i, t.special)) {
+      if (board[j] && !clear.has(j)) {
+        clear.add(j);
+        if (board[j].special) queue.push(j);
+      }
+    }
+  }
+  return fired.size;
 }
 
 /* ── 이펙트 ─────────────────────────── */
@@ -606,12 +886,75 @@ function popup(i, text, big) {
   boardEl.appendChild(d);
   setTimeout(() => d.remove(), 950);
 }
-function comboBanner(n) {
+function comboBanner(text, hot) {
   const d = document.createElement("div");
-  d.className = "combo";
-  d.textContent = n + " 연쇄!";
+  d.className = "combo" + (hot ? " hot" : "");
+  d.textContent = text;
   boardEl.appendChild(d);
   setTimeout(() => d.remove(), 820);
+}
+function burst(i, color, n) {
+  if (RM) return;
+  n = Math.min(n, 80 - liveParticles);
+  if (n <= 0) return;
+  const cx = (colOf(i) + 0.5) * 100 / COLS, cy = (rowOf(i) + 0.5) * 100 / ROWS;
+  for (let k = 0; k < n; k++) {
+    const p = document.createElement("span");
+    p.className = "p";
+    p.style.left = cx + "%";
+    p.style.top  = cy + "%";
+    p.style.setProperty("--c", color);
+    const ang = Math.random() * Math.PI * 2, dist = 26 + Math.random() * 48;
+    p.style.setProperty("--dx", (Math.cos(ang) * dist).toFixed(0) + "px");
+    p.style.setProperty("--dy", (Math.sin(ang) * dist - 14).toFixed(0) + "px");
+    boardEl.appendChild(p);
+    liveParticles++;
+    setTimeout(() => { p.remove(); liveParticles--; }, 580);
+  }
+}
+function shakeBoard() {
+  if (RM) return;
+  boardEl.classList.remove("shake");
+  void boardEl.offsetWidth;   // 리플로우 강제 → 연속 발동 시 애니메이션 재시작
+  boardEl.classList.add("shake");
+}
+function bumpScore() {
+  scoreStat.classList.remove("bump");
+  void scoreStat.offsetWidth;
+  scoreStat.classList.add("bump");
+}
+
+/* ── FEVER ──────────────────────────
+   기준을 게임 시계(timeLeft)에 묶는다. 탭이 가려져 시계가 얼면 FEVER도
+   같이 얼고, 시간 보너스를 벌면 FEVER도 그만큼 길어진다(의도한 보상). */
+function addFever(n) {
+  if (feverOn || state !== "playing") return;
+  fever = Math.min(FEVER_NEED, fever + n);
+  if (fever >= FEVER_NEED) startFever();
+  updateFeverBar();
+}
+function startFever() {
+  feverOn = true;
+  feverEndAt = timeLeft - FEVER_SEC;
+  feverRow.classList.add("on");
+  boardEl.classList.add("fever");
+  scoreLbl.textContent = "점수 ×2";
+  comboBanner("FEVER TIME!", true);
+  sfx("fever");
+}
+function endFever() {
+  feverOn = false;
+  fever = 0;
+  feverRow.classList.remove("on");
+  boardEl.classList.remove("fever");
+  scoreLbl.textContent = "점수";
+  updateFeverBar();
+}
+function updateFeverBar() {
+  const ratio = feverOn
+    ? Math.max(0, (timeLeft - feverEndAt) / FEVER_SEC)
+    : fever / FEVER_NEED;
+  feverFill.style.transform = "scaleX(" + Math.max(0, Math.min(1, ratio)).toFixed(4) + ")";
 }
 
 /* ── 연쇄 처리 ──────────────────────── */
@@ -622,71 +965,66 @@ async function resolve(origin) {
     if (!runs.length) break;
     combo++;
 
+    const groups = groupRuns(runs);
+
     // 1) 지울 칸 모으기
     const clear = new Set();
-    for (const run of runs) for (const i of run.cells) if (board[i]) clear.add(i);
+    for (const g of groups) for (const i of g.cells) if (board[i]) clear.add(i);
 
-    // 2) 4개/5개 연결 → 특수 젤리 생성 위치 확정(같은 칸이면 강한 쪽 우선)
+    // 2) 특수 젤리 생성 위치 확정(같은 칸이면 강한 쪽 우선)
+    const RANKS = { bomb: 1, cross: 2, rainbow: 3 };
     const creations = new Map();
-    for (const run of runs) {
-      if (run.cells.length < 4) continue;
-      const kind = run.cells.length >= 5 ? "zap" : "bomb";
-      const pos = run.cells.indexOf(origin) >= 0
-        ? origin
-        : run.cells[Math.floor(run.cells.length / 2)];
+    for (const g of groups) {
+      if (!g.make) continue;
+      const arr = Array.from(g.cells);
+      const pos = arr.indexOf(origin) >= 0 ? origin
+                : g.crossAt >= 0 ? g.crossAt
+                : arr[Math.floor(arr.length / 2)];
       const prev = creations.get(pos);
-      if (!prev || (prev === "bomb" && kind === "zap")) creations.set(pos, kind);
+      if (!prev || RANKS[prev] < RANKS[g.make]) creations.set(pos, g.make);
     }
     for (const pos of creations.keys()) clear.delete(pos);
 
     // 3) 지워지는 칸에 특수 젤리가 있으면 연쇄 폭발
-    const queue = [];
-    for (const i of clear) if (board[i] && board[i].special) queue.push(i);
-    const fired = new Set();
-    while (queue.length) {
-      const i = queue.pop();
-      if (fired.has(i)) continue;
-      fired.add(i);
-      const t = board[i];
-      if (!t || !t.special) continue;
-      for (const j of blastCells(i, t.special)) {
-        if (board[j] && !clear.has(j)) {
-          clear.add(j);
-          if (board[j].special) queue.push(j);
-        }
-      }
-    }
+    const firedCount = chainSpecials(clear);
     // 새로 만들어질 젤리는 이번 라운드에 지워지지 않는다
     for (const pos of creations.keys()) clear.delete(pos);
 
     if (!clear.size && !creations.size) break;
 
-    // 4) 점수
-    const mult = Math.min(combo, 8);
+    // 4) 점수 (FEVER 중엔 2배)
+    const mult = Math.min(combo, 8) * (feverOn ? 2 : 1);
     let gained = clear.size * 10 * mult;
-    for (const kind of creations.values()) gained += (kind === "zap" ? 120 : 50);
+    for (const kind of creations.values()) gained += (kind === "rainbow" ? 200 : kind === "cross" ? 100 : 50);
     score += gained;
     bumpBest();
+    addFever(clear.size);
     updateHUD();
+    bumpScore();
 
     const cellsArr = Array.from(clear);
     const anchor = cellsArr.length ? cellsArr[Math.floor(cellsArr.length / 2)]
                                    : creations.keys().next().value;
     popup(anchor, "+" + gained.toLocaleString(), combo >= 2);
-    if (combo >= 2) comboBanner(combo);
+    if (combo >= 2) comboBanner(combo + " 연쇄!" + (combo >= 4 ? "!" : ""), combo >= 4);
     sfx(clear.size >= 6 || creations.size ? "special" : "pop", combo - 1);
+    if (firedCount || creations.size) shakeBoard();
 
     // 5) 시간 보너스
     if (creations.size) {
       let bonus = 0;
-      for (const kind of creations.values()) bonus += (kind === "zap" ? 2 : 1);
+      for (const kind of creations.values()) bonus += (kind === "rainbow" ? 3 : kind === "cross" ? 2 : 1);
       addTime(bonus);
       popup(creations.keys().next().value, "+" + bonus + "초", true);
       updateHUD();
     }
 
-    // 6) 터뜨리기
-    for (const i of clear) board[i].el.classList.add("pop");
+    // 6) 터뜨리기(파티클은 팡 수에 반비례해 개수 조절 → 대량 팡 때 DOM 폭주 방지)
+    const per = clear.size > 14 ? 2 : clear.size > 7 ? 3 : 5;
+    for (const i of clear) {
+      board[i].el.classList.add("pop");
+      burst(i, TYPES[board[i].type].c, per);
+    }
     await sleep(POP_MS);
     for (const i of clear) {
       board[i].el.remove();
@@ -738,6 +1076,68 @@ function gravity() {
   return created;
 }
 
+/* ── 레인보우 발동(스왑으로) ─────────
+   매치가 없어도 항상 유효한 수. 상대 젤리 색 전부 + 자신을 지운다.
+   레인보우끼리 바꾸면 판 전체를 지운다. */
+async function fireRainbow(from, to) {
+  busy = true;
+  clearSel(); clearHint();
+  sfx("swap");
+  board[from].el.classList.add("swapping");
+  board[to].el.classList.add("swapping");
+  swapModel(from, to);
+  render();
+  await sleep(SWAP_MS);
+  board[from].el.classList.remove("swapping");
+  board[to].el.classList.remove("swapping");
+
+  const a = board[from], b = board[to];
+  const both = a.special === "rainbow" && b.special === "rainbow";
+  const rainbowAt = a.special === "rainbow" ? from : to;
+  const partner   = a.special === "rainbow" ? b : a;
+
+  const clear = new Set([rainbowAt]);
+  if (both) {
+    for (let i = 0; i < N; i++) if (board[i]) clear.add(i);
+  } else {
+    for (let i = 0; i < N; i++) {
+      if (board[i] && board[i].special !== "rainbow" && board[i].type === partner.type) clear.add(i);
+    }
+    chainSpecials(clear);   // 그 색에 폭탄·십자가 섞여 있으면 같이 터진다
+  }
+
+  const gained = clear.size * 15 * (feverOn ? 2 : 1);
+  score += gained;
+  bumpBest();
+  addFever(clear.size);
+  addTime(3);
+  updateHUD();
+  bumpScore();
+  popup(rainbowAt, "+" + gained.toLocaleString(), true);
+  comboBanner(both ? "전부 팡!!" : "레인보우 팡!", true);
+  sfx("rainbow");
+  shakeBoard();
+
+  for (const i of clear) {
+    board[i].el.classList.add("pop");
+    burst(i, both ? "#FFC94D" : TYPES[board[i].type].c, 3);
+  }
+  await sleep(POP_MS);
+  for (const i of clear) {
+    board[i].el.remove();
+    board[i] = null;
+  }
+  const created = gravity();
+  if (created.length) void boardEl.offsetHeight;
+  render();
+  await sleep(FALL_MS);
+
+  await resolve(-1);
+  if (!findMove()) await reshuffle();
+  busy = false;
+  scheduleHint();
+}
+
 /* ── 막힌 판 섞기 ───────────────────── */
 async function reshuffle() {
   const banner = document.createElement("div");
@@ -778,6 +1178,9 @@ function scheduleHint() {
 async function trySwap(from, to) {
   if (busy || state !== "playing") return;
   if (!board[from] || !board[to]) return;
+  if (board[from].special === "rainbow" || board[to].special === "rainbow") {
+    return fireRainbow(from, to);
+  }
   busy = true;
   clearSel();
   clearHint();
@@ -886,7 +1289,7 @@ boardEl.addEventListener("pointercancel", () => { dragFrom = -1; dragged = false
 function bumpBest() {
   if (score <= best) return;
   best = score;
-  Store.set(String(best));
+  Store.set(KEY_BEST, String(best));
   bestEl.textContent = best.toLocaleString();
 }
 
@@ -894,13 +1297,19 @@ function updateHUD() {
   if (score !== shownScore) { shownScore = score; scoreEl.textContent = score.toLocaleString(); }
   const secs = Math.ceil(timeLeft);
   if (secs !== shownTime) {
+    const prev = shownTime;
     shownTime = secs;
     timeEl.textContent = secs;
     const low = secs <= 10;
     clockEl.classList.toggle("low", low);
     barEl.classList.toggle("low", low);
+    if (state === "playing" && secs <= 5 && secs < prev) sfx("tick");
   }
-  barFill.style.width = Math.max(0, Math.min(100, (timeLeft / ROUND) * 100)) + "%";
+  barFill.style.transform = "scaleX(" + Math.max(0, Math.min(1, timeLeft / ROUND)).toFixed(4) + ")";
+  if (feverOn) {
+    if (timeLeft <= feverEndAt) endFever();
+    else updateFeverBar();
+  }
 }
 
 /* 시계 설계 메모
@@ -936,8 +1345,12 @@ function clockStep() {
   }
   updateHUD();
 }
-/* 보너스 시간도 deadline을 밀어야 한다(timeLeft만 더하면 다음 틱에 덮어써진다) */
+/* 보너스 시간도 deadline을 밀어야 한다(timeLeft만 더하면 다음 틱에 덮어써진다).
+   단 탭이 가려져 시계가 얼어 있는 동안은 timeLeft가 기준값이므로 거기에 더한다.
+   (가려진 채 연쇄가 끝나며 보너스가 들어올 때 낡은 deadline로 재계산하면
+   얼어 있어야 할 시간이 확 깎이는 버그가 실제로 있었다) */
 function addTime(sec) {
+  if (paused) { timeLeft = Math.min(99, timeLeft + sec); return; }
   deadline += sec * 1000;
   const max = performance.now() + 99000;
   if (deadline > max) deadline = max;
@@ -948,6 +1361,7 @@ function addTime(sec) {
 function startGame() {
   stopClock();
   clearHint(); clearSel();
+  endFever();
   state = "playing";
   busy = false;
   score = 0; timeLeft = ROUND; shownScore = -1; shownTime = -1;
@@ -961,6 +1375,17 @@ function startGame() {
   scheduleHint();
 }
 
+/* 랭크 컷은 FEVER·레인보우 도입 후 점수 인플레를 감안해 잡은 값(추후 조정 가능).
+   coupon 문구는 실제로 지켜야 하는 약속이니 여기서 원하는 보상으로 바꿀 것.
+   쿠폰은 랭크 '첫 달성' 때 한 번만 발급된다(이력은 브라우저에 저장). */
+const GRADES = [
+  { min: 20000, g: "S", c: "#FFC94D", coupon: "소원권 1장 · 뭐든 말만 해",        say: "이건 좀 심하게 잘하는데요." },
+  { min: 13000, g: "A", c: "#FF6FB0", coupon: "다음 데이트 코스, 전부 세리 마음대로", say: "이 정도면 자랑해도 됩니다." },
+  { min:  8000, g: "B", c: "#43E39C", coupon: "어깨 안마 15분권",                 say: "손끝이 매서워졌어요. 한 판 더?" },
+  { min:  4000, g: "C", c: "#56B8FF", coupon: "편의점 골라담기권",                say: "감 잡았어요. 지금부터가 진짜." },
+  { min:     0, g: "D", c: "#A8B3D6", coupon: null,                              say: "몸 풀기 끝. 다음 판이 진짜예요." },
+];
+
 async function endGame() {
   if (state === "over") return;
   state = "over";
@@ -968,22 +1393,53 @@ async function endGame() {
   clearHint(); clearSel();
   sfx("over");
   while (busy) await sleep(60);    // 진행 중이던 연쇄는 끝까지 인정
+  endFever();
   bumpBest();
   const isBest = score > roundBest;
+  const grade = GRADES.find(x => score >= x.min);
+  rankEl.textContent = grade.g;
+  rankEl.style.setProperty("--rank-c", grade.c);
   finalEl.textContent = score.toLocaleString();
   newBestEl.hidden = !isBest;
   noStoreEl.hidden = Store.persists;
-  verdictEl.textContent =
-    score >= 8000 ? "이 정도면 자랑해도 됩니다." :
-    score >= 4000 ? "손끝이 매섭네요. 한 판 더?" :
-    score >= 1500 ? "감 잡았어요. 지금부터가 진짜." :
-                    "몸 풀기 끝. 다시 하면 훨씬 나아져요.";
+  verdictEl.textContent = grade.say;
+
+  /* 쿠폰: 이번 점수가 넘어선 랭크 중 아직 발급 안 된 것을 전부 발급.
+     (S를 바로 찍으면 그 아래 쿠폰도 같이 — 이미 넘어선 목표를 남겨두지 않는다) */
+  const couponBox  = document.getElementById("couponBox");
+  const couponText = document.getElementById("couponText");
+  const nextGoal   = document.getElementById("nextGoal");
+  const newly = GRADES.filter(x => x.coupon && score >= x.min && claimed.indexOf(x.g) < 0);
+  if (newly.length) {
+    for (const x of newly) claimed.push(x.g);
+    Store.set(KEY_COUPONS, JSON.stringify(claimed));
+    couponText.textContent = newly[0].g + "랭크 · " + newly[0].coupon
+      + (newly.length > 1 ? " (+" + (newly.length - 1) + "장 동시 획득)" : "");
+    couponBox.hidden = false;
+    nextGoal.hidden = true;
+  } else {
+    couponBox.hidden = true;
+    // 다음 미발급 쿠폰까지 남은 점수를 보여줘서 '한 판 더'를 부른다
+    const remainTargets = GRADES.filter(x => x.coupon && claimed.indexOf(x.g) < 0 && x.min > score);
+    const next = remainTargets.length ? remainTargets[remainTargets.length - 1] : null;
+    if (next) {
+      nextGoal.innerHTML = "다음 쿠폰까지 <b>" + (next.min - score).toLocaleString() + "점</b> · "
+        + next.g + "랭크 " + next.min.toLocaleString() + "점 → " + next.coupon;
+      nextGoal.hidden = false;
+    } else if (GRADES.every(x => !x.coupon || claimed.indexOf(x.g) >= 0)) {
+      nextGoal.textContent = "쿠폰 올 클리어! 이제 최고 기록 경신만 남았어.";
+      nextGoal.hidden = false;
+    } else {
+      nextGoal.hidden = true;
+    }
+  }
   veilOver.hidden = false;
 }
 
 function resetToStart() {
   stopClock();
   clearHint(); clearSel();
+  endFever();
   state = "ready";
   busy = false;
   score = 0; timeLeft = ROUND; shownScore = -1; shownTime = -1;
